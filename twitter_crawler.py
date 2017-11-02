@@ -26,7 +26,7 @@ def process_json(json):
         if coords != None:
             data['coordinates'] = (coords[0], coords[1])
     elif json['geo'] != None:
-        if json['geo']['type'] == "Point":
+        if json['geo']['type'] == 'Point':
             coords = json['geo']['coordinates']
             if coords != None:
                 data['coordinates'] = (coords[0], coords[1])
@@ -82,11 +82,11 @@ class TwitterListener(StreamListener):
         if (time.time() - self.start_time) < self.limit:
             self.out_file.write(data)
             process_json(data, self.processed_data)
-            self.out_file.write("\n")
+            self.out_file.write('\n')
             return True
         #self.out_file.write('\n')
         else:
-            print("Done")
+            print('Done')
             print(self.processed_data)
             self.out_file.close()
             return False
@@ -95,7 +95,7 @@ class TwitterListener(StreamListener):
         print (status)
 
 def print_json(tweet):
-    print("-----------------------------------")
+    print('-----------------------------------')
     for field in fields:
         print('...' + field + '...')
         print(tweet[field])
@@ -104,20 +104,29 @@ if __name__ == '__main__':
     auth = tweepy.OAuthHandler(Consumer_Key,Consumer_Secret)
     auth.set_access_token(Access_Token_Key, Access_Token_Secret)    
     api = tweepy.API(auth)
-    results = api.search(q='earthquake', count=5, languages=['en'])
-    data_processed = []
+    keyword = 'los angeles disaster OR earthquake OR fire OR flood OR hurricane OR tsunami OR accident'
+    results = api.search(q=keyword, count=100, languages=['en'])
+    #data_processed = []
+    out_file = open('processed_tweets.json', 'a', encoding='utf-8')
+    out_file_raw = open('raw_tweets.json', 'a', encoding='utf-8')
     for r in results:
+        out_file_raw.write(str(r._json))
+        out_file_raw.write('\n')
         tweet = process_json(r._json)
         if tweet != None:
-            data_processed.append(tweet)
+            out_file.write(str(tweet))
+            out_file.write('\n')
+            #data_processed.append(tweet)
             #print_json(tweet)
 
         tweet = process_json(r._json.get('retweeted_status'))
         if tweet != None:
-            data_processed.append(tweet)
+            out_file.write(str(tweet))
+            out_file.write('\n')
+            #data_processed.append(tweet)
             #print_json(tweet)
-
-keyword = []
+    out_file_raw.close()
+    out_file.close()
     
 #twitterStream = Stream(auth, TwitterListener(time_limit=20)) 
 #twitterStream.filter(track=keyword, languages=['en'])
