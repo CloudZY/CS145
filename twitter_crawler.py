@@ -4,6 +4,8 @@ from tweepy import OAuthHandler
 from tweepy import API
 from tweepy import Stream
 from tweepy.streaming import StreamListener
+import sys
+import ast
 
 Consumer_Key = 'vGk3JRVlO0YwnzjVBm69fGqJX'
 Consumer_Secret = '9T97moIojHnN3rDAcFyv03suJoP4T3KEo15tlYMWK3x0UMRfBl'
@@ -13,7 +15,7 @@ Access_Token_Secret = 'GEWaDK7TPPDj4ufLDswrajfERduJlHDClowkaQBmlIwYL'
 fields = ['created_at', 'coordinates', 'text',
 'retweet_count', 'favorite_count', 'hashtags',
 'user_id', 'user_mentions', 'user_name', 'user_location',
-'user_description', 'user_followers_count', 'user_friends_count']
+'user_description', 'user_followers_count', 'user_friends_count', 'id']
 
 def process_json(json):
     if json == None:
@@ -68,6 +70,21 @@ def preprocess_data(json_data):
         process_json(json.get('retweeted_status'))
     return processed_data
 
+def reprocess_json():
+    in_file = open('raw_tweets.json', 'r')
+    out_file = open('corrected_tweets.json', 'a', encoding='utf-8')
+    for line in in_file:
+        tweet = process_json(ast.literal_eval(line))
+        if tweet != None:
+            out_file.write(str(tweet))
+            out_file.write('\n')
+        tweet = process_json(ast.literal_eval(line).get('retweeted_status'))
+        if tweet != None:
+            out_file.write(str(tweet))
+            out_file.write('\n')
+    in_file.close()
+    out_file.close()
+
 class TwitterListener(StreamListener):
 
     def __init__(self, time_limit=60):
@@ -101,32 +118,35 @@ def print_json(tweet):
         print(tweet[field])
 
 if __name__ == '__main__':
-    auth = tweepy.OAuthHandler(Consumer_Key,Consumer_Secret)
-    auth.set_access_token(Access_Token_Key, Access_Token_Secret)    
-    api = tweepy.API(auth)
-    keyword = 'los angeles disaster OR earthquake OR fire OR flood OR hurricane OR tsunami OR accident'
-    results = api.search(q=keyword, count=100, languages=['en'])
-    #data_processed = []
-    out_file = open('processed_tweets.json', 'a', encoding='utf-8')
-    out_file_raw = open('raw_tweets.json', 'a', encoding='utf-8')
-    for r in results:
-        out_file_raw.write(str(r._json))
-        out_file_raw.write('\n')
-        tweet = process_json(r._json)
-        if tweet != None:
-            out_file.write(str(tweet))
-            out_file.write('\n')
-            #data_processed.append(tweet)
-            #print_json(tweet)
+    if len(sys.argv) > 1 and sys.argv[1] == '-r':
+        reprocess_json()
+    else:
+        auth = tweepy.OAuthHandler(Consumer_Key,Consumer_Secret)
+        auth.set_access_token(Access_Token_Key, Access_Token_Secret)    
+        api = tweepy.API(auth)
+        keyword = '“los angeles” OR la disaster OR earthquake OR "forest fire" OR flood OR hurricane OR tsunami OR "car accident"'
+        results = api.search(q=keyword, count=100, languages=['en'])
+        #data_processed = []
+        out_file = open('processed_tweets.json', 'a', encoding='utf-8')
+        out_file_raw = open('raw_tweets.json', 'a', encoding='utf-8')
+        for r in results:
+            out_file_raw.write(str(r._json))
+            out_file_raw.write('\n')
+            tweet = process_json(r._json)
+            if tweet != None:
+                out_file.write(str(tweet))
+                out_file.write('\n')
+                #data_processed.append(tweet)
+                #print_json(tweet)
 
-        tweet = process_json(r._json.get('retweeted_status'))
-        if tweet != None:
-            out_file.write(str(tweet))
-            out_file.write('\n')
-            #data_processed.append(tweet)
-            #print_json(tweet)
-    out_file_raw.close()
-    out_file.close()
+            tweet = process_json(r._json.get('retweeted_status'))
+            if tweet != None:
+                out_file.write(str(tweet))
+                out_file.write('\n')
+                #data_processed.append(tweet)
+                #print_json(tweet)
+        out_file_raw.close()
+        out_file.close()
     
 #twitterStream = Stream(auth, TwitterListener(time_limit=20)) 
 #twitterStream.filter(track=keyword, languages=['en'])
