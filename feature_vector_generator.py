@@ -132,7 +132,7 @@ if __name__ == '__main__':
     test_out_file = ''
     test_label_file = 'test_labels'
     
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1 or sys.argv[1] == '--help':
         printHelp()
         sys.exit()
     else:
