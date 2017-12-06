@@ -16,7 +16,64 @@ fields = ['created_at', 'coordinates', 'text',
 event_types = ['festival', 'disaster', 'traffic', 'sports']
 label_num = {'traffic' : 1, 'sports' : 2, 'festival' : 3, 'disaster' : 4}
 
-disregard = ['rt', '’', 'the', 'de', 'en', 'we']
+disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp']
+
+def process_json(json):
+    if json == None:
+        return None
+
+    data = dict()
+    # geolocation extraction
+    if json['coordinates'] != None:
+        coords = json['coordinates']['coordinates']
+        if coords != None:
+            data['coordinates'] = (coords[0], coords[1])
+    elif json['geo'] != None:
+        if json['geo']['type'] == 'Point':
+            coords = json['geo']['coordinates']
+            if coords != None:
+                data['coordinates'] = (coords[0], coords[1])
+
+    # entities extraction
+    if json['entities'] != None:
+        entities = json['entities']
+        if entities['hashtags'] != None:
+            hashtags = entities['hashtags']
+            hts = []
+            for hashtag in hashtags:
+                hts.append(hashtag['text'])
+            data['hashtags'] = hts
+
+        if entities['user_mentions'] != None:
+            user_mentions = entities['user_mentions']
+            ums = []
+            for um in user_mentions:
+                ums.append(um['id'])
+            data['user_mentions'] = ums
+
+    # user info extraction
+    if json['user'] != None:
+        user = json['user']
+        for keyword in ['id', 'name', 'location', 'description', 'followers_count', 'friends_count']:
+            data['user_' + keyword] = user[keyword]
+
+    # other info extraction
+    for field in fields:
+        if not field in data:
+            data[field] = json[field]
+
+    return data
+
+def preprocess_data(json_data):
+    processed_data = []
+    for json in json_data:
+        j = process_json(json)
+        if j is not None:
+            processed_data.append(j)
+        j = process_json(json.get('retweeted_status'))
+        if j is not None:
+            processed_data.append(j)
+    return processed_data
 
 def print_json(tweet):
     print('-----------------------------------')
@@ -29,7 +86,7 @@ def read_from_file(filename):
     data = []
     for line in in_file:
         data.append(ast.literal_eval(line))
-    in_file.close()  
+    in_file.close()
     return data
 
 def remove_dups(data):
@@ -38,11 +95,12 @@ def remove_dups(data):
     for tweet in data:
         if tweet['id'] not in ids:
             ids.add(tweet['id'])
+            tweet['index'] = len(ids)
             rm_dups.append(tweet)
 
     return rm_dups
 
-def tokenize_text_from_json_data(data, write_filename=''):
+def tokenize_text_from_json_data(data):
     tweets_text = []
     for tweet in data:
         tweets_text.append(tweet['text'])
@@ -60,16 +118,11 @@ def tokenize_text_from_json_data(data, write_filename=''):
     for text in tweets_text:
         text = text.translate(translator)
         text = emoji_pattern.sub(r'', text)
+        text = re.sub('[…-]', '', text)
+        text = re.sub(r'http\S*', '', text)
         word_tokens = word_tokenize(text)
         words = [w.lower() for w in word_tokens if not w in stop_words]
         filtered_text.append(words)
-
-    if write_filename != '':
-        out_file = open(write_filename, 'w', encoding='utf-8')
-        for words in filtered_text:
-            out_file.write(str(words))
-            out_file.write('\n')
-        out_file.close()
 
     return filtered_text
 
@@ -97,7 +150,8 @@ def get_features_from_train_data(data, K=10):
 def get_feature_vectors(filtered_text, features):
     feat_vector = []
     train_vec = []
-    for words in filtered_text:
+    for i in range(len(filtered_text)):
+        words = filtered_text[i]
         vec = [0] * (len(features) + 1)
         tr_vec = [0] * 2
         for w in words:
@@ -105,7 +159,7 @@ def get_feature_vectors(filtered_text, features):
                 vec[features[w]] += 1
         tr_vec[0] = sum(vec)
         tr_vec[1] = 1. - float(tr_vec[0]) / len(words)
-        vec[len(features)] = len(words)
+        vec[len(features)] = i + 1
         train_vec.append(tr_vec)
         feat_vector.append(vec)
 
@@ -132,6 +186,13 @@ def write_to_file(data, filename):
         out_file.write(str(d))
         out_file.write('\n')
     out_file.close()
+
+def get_data_files_from_raw_json(in_file, out_token, out_json):
+    train_raw_data = read_from_file(in_file)
+    train_raw_data = preprocess_data(train_raw_data)
+    train_raw_data = remove_dups(train_raw_data)
+    write_to_file(train_raw_data, out_json)
+    write_to_file(tokenize_text_from_json_data(train_raw_data), out_token)
 
 def printHelp():
     print('-K k : keep top k (>0) number of features, keep all available features if not enough in training data.')
@@ -191,6 +252,8 @@ if __name__ == '__main__':
     all_labels = []
     feats = dict()
     clfs = dict()
+
+    get_data_files_from_raw_json('./raw/festival.json', './temp/festival.tokens', './temp/festival.json')
     
     for event_type in event_types:
         train_in_file = './data/' + event_type + '.data'
@@ -224,7 +287,7 @@ if __name__ == '__main__':
             feat_set = set(features)
     
     all_features = get_dict_from_set(feat_set)
-    all_vector = [list(all_features) + ['total']]
+    all_vector = [list(all_features) + ['id']]
     feat_vec, train_vec = get_feature_vectors(all_data, all_features)
     all_vector = all_vector + feat_vec
     write_to_file(all_vector, './out/clf_train.vectors')
@@ -243,7 +306,7 @@ if __name__ == '__main__':
             predicts[i] = predicts[i] or one_try[i]
 
     feat_vec, test_vec = get_feature_vectors(test_data, all_features)
-    feat_vec.insert(0, list(all_features) + ['total'])
+    feat_vec.insert(0, list(all_features) + ['id'])
     write_to_file(feat_vec, './out/clf_test.vectors')        
     write_to_file(predicts, './out/clf_test.labels')
 
@@ -252,3 +315,4 @@ if __name__ == '__main__':
         if truth[i] != 0:
             truth[i] = 1
     evaluate_prediction(predicts, truth)
+    
