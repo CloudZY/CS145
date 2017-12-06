@@ -13,7 +13,7 @@ fields = ['created_at', 'coordinates', 'text',
 'user_id', 'user_mentions', 'user_name', 'user_location',
 'user_description', 'user_followers_count', 'user_friends_count', 'id']
 
-event_types = ['festival', 'traffic']#, 'sports', 'disaster']
+event_types = ['festival', 'traffic', 'sports', 'disaster']
 label_num = {'traffic' : 1, 'sports' : 2, 'festival' : 3, 'disaster' : 4}
 
 disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp']
@@ -122,7 +122,6 @@ def tokenize_text_from_json_data(data):
 
     filtered_text = []
     for text in tweets_text:
-        ori = text
         text = text.translate(translator)
         text = emoji_pattern.sub(r'', text)
         text = re.sub('[…-]', '', text)
