@@ -13,7 +13,7 @@ fields = ['created_at', 'coordinates', 'text',
 'user_id', 'user_mentions', 'user_name', 'user_location',
 'user_description', 'user_followers_count', 'user_friends_count', 'id']
 
-event_types = ['festival', 'disaster', 'traffic', 'sports']
+event_types = ['festival', 'traffic']#, 'sports', 'disaster']
 label_num = {'traffic' : 1, 'sports' : 2, 'festival' : 3, 'disaster' : 4}
 
 disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp']
@@ -24,42 +24,48 @@ def process_json(json):
 
     data = dict()
     # geolocation extraction
-    if json['coordinates'] != None:
-        coords = json['coordinates']['coordinates']
-        if coords != None:
-            data['coordinates'] = (coords[0], coords[1])
-    elif json['geo'] != None:
-        if json['geo']['type'] == 'Point':
+    if 'coordinates' in json and json['coordinates'] != None:
+        if 'coordinates' in json['coordinates']:
+            coords = json['coordinates']['coordinates']
+            if coords != None:
+                data['coordinates'] = (coords[0], coords[1])
+    elif 'geo' in json and json['geo'] != None:
+        if 'type' in json['geo'] and json['geo']['type'] == 'Point' and 'coordinates' in json['geo']:
             coords = json['geo']['coordinates']
             if coords != None:
                 data['coordinates'] = (coords[0], coords[1])
 
     # entities extraction
-    if json['entities'] != None:
+    if 'entities' in json and json['entities'] != None:
         entities = json['entities']
-        if entities['hashtags'] != None:
+        if 'hashtags' in entities:
             hashtags = entities['hashtags']
-            hts = []
-            for hashtag in hashtags:
-                hts.append(hashtag['text'])
-            data['hashtags'] = hts
+            if hashtags != None:
+                hts = []
+                for hashtag in hashtags:
+                    if 'text' in hashtag:
+                        hts.append(hashtag['text'])
+                data['hashtags'] = hts
 
-        if entities['user_mentions'] != None:
+        if 'user_mentions' in entities:
             user_mentions = entities['user_mentions']
-            ums = []
-            for um in user_mentions:
-                ums.append(um['id'])
-            data['user_mentions'] = ums
+            if user_mentions != None:
+                ums = []
+                for um in user_mentions:
+                    if 'id' in um:
+                        ums.append(um['id'])
+                data['user_mentions'] = ums
 
     # user info extraction
-    if json['user'] != None:
+    if 'user' in json and json['user'] != None:
         user = json['user']
         for keyword in ['id', 'name', 'location', 'description', 'followers_count', 'friends_count']:
-            data['user_' + keyword] = user[keyword]
+            if keyword in user:
+                data['user_' + keyword] = user[keyword]
 
     # other info extraction
     for field in fields:
-        if not field in data:
+        if not field in data and field in json:
             data[field] = json[field]
 
     return data
@@ -70,9 +76,10 @@ def preprocess_data(json_data):
         j = process_json(json)
         if j is not None:
             processed_data.append(j)
-        j = process_json(json.get('retweeted_status'))
-        if j is not None:
-            processed_data.append(j)
+        if 'retweeted_status' in json:
+            j = process_json(json['retweeted_status'])
+            if j is not None:
+                processed_data.append(j)
     return processed_data
 
 def print_json(tweet):
@@ -95,7 +102,6 @@ def remove_dups(data):
     for tweet in data:
         if tweet['id'] not in ids:
             ids.add(tweet['id'])
-            tweet['index'] = len(ids)
             rm_dups.append(tweet)
 
     return rm_dups
@@ -116,6 +122,7 @@ def tokenize_text_from_json_data(data):
 
     filtered_text = []
     for text in tweets_text:
+        ori = text
         text = text.translate(translator)
         text = emoji_pattern.sub(r'', text)
         text = re.sub('[…-]', '', text)
@@ -158,7 +165,10 @@ def get_feature_vectors(filtered_text, features):
             if w in features:
                 vec[features[w]] += 1
         tr_vec[0] = sum(vec)
-        tr_vec[1] = 1. - float(tr_vec[0]) / len(words)
+        if len(words) == 0:
+            tr_vec[1] = 1.
+        else:
+            tr_vec[1] = 1. - float(tr_vec[0]) / len(words)
         vec[len(features)] = i + 1
         train_vec.append(tr_vec)
         feat_vector.append(vec)
@@ -249,21 +259,22 @@ if __name__ == '__main__':
     K = 10
     feat_set = set()
     all_data = []
+    all_json = []
     all_labels = []
     feats = dict()
     clfs = dict()
-
-    get_data_files_from_raw_json('./raw/festival.json', './temp/festival.tokens', './temp/festival.json')
+    
+    #get_data_files_from_raw_json('./raw/disaster_raw.json', './temp/disaster.tokens', './temp/disaster.json')
     
     for event_type in event_types:
-        train_in_file = './data/' + event_type + '.data'
+        train_in_file = './data/' + event_type + '.json'
         train_tokens_in_file = './data/' + event_type + '.tokens'
         train_label_file = './data/' + event_type + '.labels'
         train_out_file = './out/' + event_type + '.tokens'
 
-        train_data = read_from_file(train_tokens_in_file)
-        #train_raw_data = remove_dups(train_raw_data)
-        #train_data = tokenize_text_from_json_data(train_raw_data, train_out_file)
+        train_raw_data = preprocess_data(read_from_file(train_in_file))
+        train_raw_data = remove_dups(train_raw_data)
+        train_data = tokenize_text_from_json_data(train_raw_data)
         features = get_features_from_train_data(train_data, K)
         feat_vec, train_vec = get_feature_vectors(train_data, features)
         train_labels = read_from_file(train_label_file)
@@ -272,6 +283,7 @@ if __name__ == '__main__':
             if train_labels[i] != 0:
                 all_labels.append(train_labels[i])
                 all_data.append(train_data[i])
+                all_json.append(train_raw_data[i])
             if train_labels[i] != label_num[event_type]:
                 train_labels[i] = 0
             else:
@@ -286,17 +298,22 @@ if __name__ == '__main__':
         else:
             feat_set = set(features)
     
+    for i in range(len(all_json)):
+        all_json[i]['index'] = i + 1
+
     all_features = get_dict_from_set(feat_set)
     all_vector = [list(all_features) + ['id']]
     feat_vec, train_vec = get_feature_vectors(all_data, all_features)
     all_vector = all_vector + feat_vec
     write_to_file(all_vector, './out/clf_train.vectors')
     write_to_file(all_labels, './out/clf_train.labels')
+    write_to_file(all_json, './out/clf_train.json')
+
 
     test_in_file = './data/test.data'
     test_raw_data = read_from_file(test_in_file)
     test_raw_data = remove_dups(test_raw_data)
-    test_data = tokenize_text_from_json_data(test_raw_data, './out/test.tokens')
+    test_data = tokenize_text_from_json_data(test_raw_data)
     predicts = [0] * len(test_data)
 
     for event_type in event_types:
