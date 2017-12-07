@@ -6,6 +6,7 @@ import operator
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from sklearn import svm
+import numpy as np
 
 
 fields = ['created_at', 'coordinates', 'text',
@@ -13,10 +14,10 @@ fields = ['created_at', 'coordinates', 'text',
 'user_id', 'user_mentions', 'user_name', 'user_location',
 'user_description', 'user_followers_count', 'user_friends_count', 'id']
 
-event_types = ['festival', 'traffic', 'sports', 'disaster']
+event_types = ['disaster', 'festival', 'traffic', 'sports']
 label_num = {'traffic' : 1, 'sports' : 2, 'festival' : 3, 'disaster' : 4}
 
-disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp']
+disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp', 'l']
 
 def process_json(json):
     if json == None:
@@ -124,7 +125,7 @@ def tokenize_text_from_json_data(data):
     for text in tweets_text:
         text = text.translate(translator)
         text = emoji_pattern.sub(r'', text)
-        text = re.sub('[…-]', '', text)
+        text = re.sub('[…\“\”\—\’]', '', text)
         text = re.sub(r'http\S*', '', text)
         word_tokens = word_tokenize(text)
         words = [w.lower() for w in word_tokens if not w in stop_words]
@@ -200,8 +201,13 @@ def get_data_files_from_raw_json(in_file, out_token, out_json):
     train_raw_data = read_from_file(in_file)
     train_raw_data = preprocess_data(train_raw_data)
     train_raw_data = remove_dups(train_raw_data)
+    for i in range(len(train_raw_data)):
+        train_raw_data[i]['index'] = i + 1
     write_to_file(train_raw_data, out_json)
-    write_to_file(tokenize_text_from_json_data(train_raw_data), out_token)
+    tokens = tokenize_text_from_json_data(train_raw_data)
+    for i in range(len(tokens)):
+        tokens[i].append(i + 1)
+    write_to_file(tokens, out_token)
 
 def printHelp():
     print('-K k : keep top k (>0) number of features, keep all available features if not enough in training data.')
@@ -263,8 +269,16 @@ if __name__ == '__main__':
     feats = dict()
     clfs = dict()
     
-    #get_data_files_from_raw_json('./raw/disaster_raw.json', './temp/disaster.tokens', './temp/disaster.json')
-    
+    #get_data_files_from_raw_json('./data/disaster.json', './temp/disaster.tokens', './temp/disaster.json')
+    '''
+    idx = []
+    tokens = read_from_file('./temp/disaster.tokens')
+    for token in tokens:
+        idx.append(token[-1])
+    jsons = np.array(read_from_file('./temp/disaster.json'))
+    write_to_file(jsons[idx], './temp/new_disaster.json')
+    '''
+
     for event_type in event_types:
         train_in_file = './data/' + event_type + '.json'
         train_tokens_in_file = './data/' + event_type + '.tokens'
@@ -331,4 +345,3 @@ if __name__ == '__main__':
         if truth[i] != 0:
             truth[i] = 1
     evaluate_prediction(predicts, truth)
-    
