@@ -8,7 +8,8 @@ import ast
 
 class Model:
   def __init__(self):
-    self.model = None
+    self.dt_model = None
+    self.rf_model = None
 
   def readData(self, v_path, l_path):
     vector_file = open(v_path)
@@ -35,40 +36,63 @@ class Model:
     vectors, ids, labels = self.readData(v_path, l_path)
 
     kf = KFold(n_splits=10, shuffle=True)
-    accu = []
-    models = []
-    fold = 1
+    
+    dt_models = []
+    dt_accu = []
+
+    rf_models = []
+    rf_accu = []
     for train_keys, test_keys in kf.split(range(len(vectors))):
       train_vectors, train_labels = self.getSubset(vectors, labels, train_keys)
       test_vectors, test_labels = self.getSubset(vectors, labels, test_keys)
-      #clf = tree.DecisionTreeClassifier()
-      clf = RandomForestClassifier(n_estimators=5)
-      clf = clf.fit(train_vectors,train_labels)
-      models.append(clf)
+      
+      dt_clf = tree.DecisionTreeClassifier()
+      dt_clf = dt_clf.fit(train_vectors, train_labels)
+      dt_models.append(dt_clf)
+      dt_pred = dt_clf.predict(test_vectors)
+      dt_nfold_acc = accuracy_score(test_labels, dt_pred)
+      dt_accu.append(dt_nfold_acc)
 
-      pred = clf.predict(test_vectors)
-      nfold_acc = accuracy_score(test_labels, pred)
+      rf_clf = RandomForestClassifier(n_estimators=10)
+      rf_clf = rf_clf.fit(train_vectors,train_labels)
+      rf_models.append(rf_clf)
+      rf_pred = rf_clf.predict(test_vectors)
+      rf_nfold_acc = accuracy_score(test_labels, rf_pred)
+      rf_accu.append(rf_nfold_acc)
 
-      accu.append(nfold_acc)
-      print '{} fold accuracy:{}'.format(fold, nfold_acc)
-      fold += 1
-    print 'average accuracy:{}'.format(np.mean(accu))
+    print 'decision tree average accuracy:{}'.format(np.mean(dt_accu))
+    print 'random forest average accuracy:{}'.format(np.mean(rf_accu))
 
-    max_acc = np.argmax(accu)
-    self.model = models[max_acc]
+    dt_max_acc = np.argmax(dt_accu)
+    rf_max_acc = np.argmax(rf_accu)
+
+    self.dt_model = dt_models[dt_max_acc]
+    self.rf_model = rf_models[rf_max_acc]
 
   def testModel(self, v_path, l_path):
     vectors, ids, labels = self.readData(v_path, l_path)
-    prediction = self.model.predict(vectors)
-    accu = accuracy_score(labels, prediction)
-    print 'test accuracy:{}'.format(accu)
+    dt_prediction = self.dt_model.predict(vectors)
+    rf_prediction = self.rf_model.predict(vectors)
+
+    dt_accu = accuracy_score(labels, dt_prediction)
+    rf_accu = accuracy_score(labels, rf_prediction)
+    print 'decision tree test accuracy:{}'.format(dt_accu)
+    print 'random forest test accuracy:{}'.format(rf_accu)
 
     f = open('./out/decisionTree_gt_pred.txt', 'w+')
     f.write(str(labels))
     f.write('\n')
-    f.write(str(prediction.tolist()))
+    f.write(str(dt_prediction.tolist()))
     f.write('\n')
-    f.write(str(accu))
+    f.write(str(dt_accu))
+    f.close()
+
+    f = open('./out/randomForest_gt_pred.txt', 'w+')
+    f.write(str(labels))
+    f.write('\n')
+    f.write(str(rf_prediction.tolist()))
+    f.write('\n')
+    f.write(str(rf_accu))
     f.close()
 
     f1 = open('./out/dt_pred_class_1.vectors', 'w+')
@@ -77,24 +101,45 @@ class Model:
     f4 = open('./out/dt_pred_class_4.vectors', 'w+')
     for i in range(len(vectors)):
       output = str(vectors[i]+[ids[i]])
-      if prediction[i] == 1:
+      if dt_prediction[i] == 1:
         f1.write(output)
         f1.write('\n')
-      if prediction[i] == 2:
+      if dt_prediction[i] == 2:
         f2.write(output)
         f2.write('\n')
-      if prediction[i] == 3:
+      if dt_prediction[i] == 3:
         f3.write(output)
         f3.write('\n')
-      if prediction[i] == 4:
+      if dt_prediction[i] == 4:
         f4.write(output)
         f4.write('\n')
-
     f1.close()
     f2.close()
     f3.close()
     f4.close()
 
+    f1 = open('./out/rf_pred_class_1.vectors', 'w+')
+    f2 = open('./out/rf_pred_class_2.vectors', 'w+')
+    f3 = open('./out/rf_pred_class_3.vectors', 'w+')
+    f4 = open('./out/rf_pred_class_4.vectors', 'w+')
+    for i in range(len(vectors)):
+      output = str(vectors[i]+[ids[i]])
+      if rf_prediction[i] == 1:
+        f1.write(output)
+        f1.write('\n')
+      if rf_prediction[i] == 2:
+        f2.write(output)
+        f2.write('\n')
+      if rf_prediction[i] == 3:
+        f3.write(output)
+        f3.write('\n')
+      if rf_prediction[i] == 4:
+        f4.write(output)
+        f4.write('\n')
+    f1.close()
+    f2.close()
+    f3.close()
+    f4.close()
 
     
 if __name__ == '__main__':
