@@ -41,7 +41,7 @@ def generate_predict_output(vector, id):
 def main():
     vector_file_path = './out/train.vectors'
     label_file_path = './out/train.labels'
-    D_in, H, D_out, epoch_num, k_fold = 32, 100, 4, 5000, 10
+    D_in, H, D_out, epoch_num, k_fold = 39, 100, 4, 5000, 10
 
     vector_list, label_list, id_list = read_vector_label(vector_file_path, label_file_path)
     # folds = generate_folds(vector_list, label_list, id_list, k_fold)
@@ -51,7 +51,7 @@ def main():
 
     model = TwoLayerNet(D_in, H, D_out)
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=3e-1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=2e-1)
     #
     # x = Variable(torch.FloatTensor(input_dt))
     # y = Variable(torch.LongTensor(output_dt))
@@ -65,6 +65,7 @@ def main():
     test_y = Variable(torch.LongTensor(label_list_test))
 
     final_label_result = []
+    best_acc = 0.0
 
     for t in range(epoch_num):
         # Forward pass: Compute predicted y by passing x to the model
@@ -96,7 +97,8 @@ def main():
             if pred_label[index].data[0] == test_y[index].data[0]:
                 correct_count += 1
         print("test accuracy: ", correct_count / len(test_y))
-        final_label_result = pred_label
+        if (correct_count / len(test_y) > best_acc):
+            final_label_result = pred_label
 
     predict_file_1 = open('./out/predict_class_1.vectors', 'w')
     predict_file_2 = open('./out/predict_class_2.vectors', 'w')

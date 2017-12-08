@@ -1,8 +1,8 @@
 import ast
 import numpy as np
 
-vector_file_path = './out/clf_whole.vectors'
-label_file_path = './out/clf_whole.labels'
+vector_file_path = './out/clf_train.vectors'
+label_file_path = './out/clf_train.labels'
 vector_file = open(vector_file_path)
 label_file = open(label_file_path)
 vector_list, label_list, id_list = [], [], []
@@ -37,7 +37,6 @@ for i in range(len(seq_array)):
     index = seq_array[i]
     if i <= split_idx:
         vector_list[index].append(id_list[index])
-        print(vector_list[index])
         vector_train_output.write(str(vector_list[index]) + '\n')
         label_train_output.write(str(label_list[index]) + '\n')
     else:

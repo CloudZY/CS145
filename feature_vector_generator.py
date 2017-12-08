@@ -17,7 +17,7 @@ fields = ['created_at', 'coordinates', 'text',
 event_types = ['disaster', 'festival', 'traffic', 'sports']
 label_num = {'traffic' : 1, 'sports' : 2, 'festival' : 3, 'disaster' : 4}
 
-disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp', 'l']
+disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp', 'l', 'diego', 'san', 'nearby']
 
 def process_json(json):
     if json == None:
