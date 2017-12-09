@@ -34,27 +34,21 @@ def generate_folds(vector_list, label_list, id_list, K):
     return folds
 
 def generate_predict_output(vector, id):
-    vector.append(id)
-    data = str(vector)[1:-1].replace(', ', '\t')
+    tmp = vector
+    tmp.append(id)
+    data = str(tmp)[1:-1].replace(', ', '\t')
     return data
 
 def main():
     vector_file_path = './out/train.vectors'
     label_file_path = './out/train.labels'
-    D_in, H, D_out, epoch_num, k_fold = 39, 100, 4, 5000, 10
+    D_in, H, D_out, epoch_num, k_fold = 39, 200, 4, 1500, 10
 
     vector_list, label_list, id_list = read_vector_label(vector_file_path, label_file_path)
-    # folds = generate_folds(vector_list, label_list, id_list, k_fold)
-    # np.random.shuffle(folds)
-    # print(folds)
-
 
     model = TwoLayerNet(D_in, H, D_out)
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=2e-1)
-    #
-    # x = Variable(torch.FloatTensor(input_dt))
-    # y = Variable(torch.LongTensor(output_dt))
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-1)
 
     vector_file_test_path = './out/test.vectors'
     label_file_test_path = './out/test.labels'
@@ -65,6 +59,8 @@ def main():
     test_y = Variable(torch.LongTensor(label_list_test))
 
     final_label_result = []
+    final_train_result = []
+    train_acc = 0.0
     best_acc = 0.0
 
     for t in range(epoch_num):
@@ -92,13 +88,16 @@ def main():
 
         correct_count = 0
         y_pred = model(test_x)
-        value, pred_label = torch.max(y_pred, 1)
+        value, test_pred_label = torch.max(y_pred, 1)
         for index in range(len(test_y)):
-            if pred_label[index].data[0] == test_y[index].data[0]:
+            if test_pred_label[index].data[0] == test_y[index].data[0]:
                 correct_count += 1
         print("test accuracy: ", correct_count / len(test_y))
         if (correct_count / len(test_y) > best_acc):
-            final_label_result = pred_label
+            final_label_result = test_pred_label
+            final_train_result = pred_label
+            train_acc = count / len(y)
+            best_acc = correct_count / len(test_y)
 
     predict_file_1 = open('./out/predict_class_1.vectors', 'w')
     predict_file_2 = open('./out/predict_class_2.vectors', 'w')
@@ -113,6 +112,30 @@ def main():
             predict_file_3.write(generate_predict_output(vector_list_test[index], id_list_test[index]) + '\n')
         elif final_label_result[index].data[0] == 3:
             predict_file_4.write(generate_predict_output(vector_list_test[index], id_list_test[index]) + '\n')
+
+    for index in range(len(label_list)):
+        if final_train_result[index].data[0] == 0:
+            predict_file_1.write(generate_predict_output(vector_list[index], id_list[index]) + '\n')
+        elif final_train_result[index].data[0] == 1:
+            predict_file_2.write(generate_predict_output(vector_list[index], id_list[index]) + '\n')
+        elif final_train_result[index].data[0] == 2:
+            predict_file_3.write(generate_predict_output(vector_list[index], id_list[index]) + '\n')
+        elif final_train_result[index].data[0] == 3:
+            predict_file_4.write(generate_predict_output(vector_list[index], id_list[index]) + '\n')
+
+    print(len(vector_list))
+    print(len(label_list))
+    final_train_result = [final_train_result[i].data[0] for i in range(len(label_list))]
+    final_label_result = [final_label_result[i].data[0] for i in range(len(label_list_test))]
+    label_list = label_list + label_list_test
+    final_train_result = final_train_result + final_label_result
+    print(len(final_train_result))
+    print(len(label_list))
+    cm_file = open('./out/nn_cm', 'w')
+    cm_file.write(str(label_list) + '\n')
+    cm_file.write(str(final_train_result) + '\n')
+    cm_file.write(str(train_acc) + ' ' + str(best_acc))
+    cm_file.close()
 
 if __name__ == '__main__':
     main()

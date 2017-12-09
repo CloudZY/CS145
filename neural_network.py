@@ -7,7 +7,7 @@ class TwoLayerNet(torch.nn.Module):
         super(TwoLayerNet, self).__init__()
         self.linear1 = torch.nn.Linear(D_in, H)
         self.linear2 = torch.nn.Linear(H, D_out)
-        # self.softmax = torch.nn.LogSoftmax()
+        self.dropout = torch.nn.Dropout(p=0.1)
 
     def forward(self, x):
         """
@@ -15,8 +15,7 @@ class TwoLayerNet(torch.nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
-        h_relu = F.sigmoid(self.linear1(x))
+        h_relu = F.relu(self.linear1(x))
+        h_relu = self.dropout(h_relu)
         o_origin = self.linear2(h_relu)
-        # y_pred = self.softmax(o_origin)
-        # return y_pred
         return o_origin

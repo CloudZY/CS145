@@ -124,11 +124,11 @@ if __name__ == '__main__':
         auth = tweepy.OAuthHandler(Consumer_Key,Consumer_Secret)
         auth.set_access_token(Access_Token_Key, Access_Token_Secret)    
         api = tweepy.API(auth)
-        keyword = '“los angeles” OR la disaster OR earthquake OR "forest fire" OR flood OR hurricane OR tsunami OR "car accident"'
-        results = api.search(q=keyword, count=100, languages=['en'])
+        keyword = 'los angeles "car accident" OR "traffic jam" OR "car crash" OR "road work" OR "heavy traffic"'
+        results = api.search(q=keyword, count=500, languages=['en'])
         #data_processed = []
-        out_file = open('processed_tweets.json', 'a', encoding='utf-8')
-        out_file_raw = open('raw_tweets.json', 'a', encoding='utf-8')
+        out_file = open('./out/processed_traffic_tweets_new.json', 'a', encoding='utf-8')
+        out_file_raw = open('./out/raw_traffic_tweets_new.json', 'a', encoding='utf-8')
         for r in results:
             out_file_raw.write(str(r._json))
             out_file_raw.write('\n')
