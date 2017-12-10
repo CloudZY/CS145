@@ -39,24 +39,6 @@ def plot_confusion_matrix(cm, classes,
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
 
-
-
-# ground_truth = []
-# pred_labels = []
-#
-# with open('english.output.txt', 'r') as predictions, open('data/us_trial.labels', 'r') as gnd_truth:
-#     for p in predictions:
-#         pred_labels.append(p[:-1])
-#
-#     for g in gnd_truth:
-# #        print(g[-1:])
-#         if(g[-1:] == '\n'):
-#             ground_truth.append(g[:-1])
-#         else:
-#             ground_truth.append(g)
-
-#
-# input_file = open('../data/out/randomForest_gt_pred.txt')
 input_file = open('../data/out/nn_cm')
 ground_truth = input_file.readline()
 predict = input_file.readline()
