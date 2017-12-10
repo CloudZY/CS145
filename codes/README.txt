@@ -58,3 +58,19 @@ Input file:
 '../data/out/nn_cm'
 Output file:
 '../data/pic/nn_cm.png'
+
+# Cos_DBScan.py
+Libraries required:
+None
+Description:
+This program is used to do clustering on four datasets, which the input is the four predict class datas which generate during the classfication process.The result is a data file that contains datas that have been clustered to different clusters.
+Input file:
+'../data/out/predict_class_1.vectors'
+'../data/out/predict_class_2.vectors'
+'../data/out/predict_class_3.vectors'
+'../data/out/predict_class_4.vectors'
+Output file:
+'../data/out/cluster_result_1.csv'
+'../data/out/cluster_result_2.csv'
+'../data/out/cluster_result_3.csv'
+'../data/out/cluster_result_4.csv'
