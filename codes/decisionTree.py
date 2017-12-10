@@ -109,7 +109,7 @@ class Model:
     f3 = open('../data/out/dt_predict_class_3.vectors', 'w+')
     f4 = open('../data/out/dt_predict_class_4.vectors', 'w+')
     for i in range(len(vectors)):
-      output = str(vectors[i]+[ids[i]])
+      output = generate_predict_output(vectors[i], ids[i])+'\n'
       if dt_prediction[i] == 1:
         f1.write(output)
         f1.write('\n')
