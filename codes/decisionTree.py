@@ -79,7 +79,7 @@ class Model:
     print 'decision tree test accuracy:{}'.format(dt_accu)
     print 'random forest test accuracy:{}'.format(rf_accu)
 
-    f = open('./out/decisionTree_gt_pred.txt', 'w+')
+    f = open('../data/out/dt_cm', 'w+')
     f.write(str(labels))
     f.write('\n')
     f.write(str(dt_prediction.tolist()))
@@ -87,7 +87,7 @@ class Model:
     f.write(str(dt_accu))
     f.close()
 
-    f = open('./out/randomForest_gt_pred.txt', 'w+')
+    f = open('../data/out/rf_cm', 'w+')
     f.write(str(labels))
     f.write('\n')
     f.write(str(rf_prediction.tolist()))
