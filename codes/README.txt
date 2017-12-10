@@ -1,7 +1,30 @@
 # CS145
 
+# clusterRanking.py:
+Libraries required:
+* numpy
+* ast
+Description:
+This module is used to rank the clusters (tweet events). It reads in the original tweet data and the clustered output from clustering module. It outputs the ranking results and plain texts for data visualization.
+Input file:
+'../data/out/clf_train.json'
+'../data/out/cluster_result_k.csv' (k=1,2,3,4)
+Output file:
+'../data/out/ranking_result_k' (k=1,2,3,4)
+'../data/out/plain_k' (k=1,2,3,4)
+
 # decisionTree.py:
-This module is used to construct, train and test decision tree model and random forest model. It takes in the training vectors file "../data/out/clf_train.vectors" and the training label file "../data/out/clf_train.labels". It will output four predicted classes for both decision tree and random forest model. 
+Libraries required:
+* sklearn
+* numpy
+* ast
+Description:
+This module is used to construct, train and test decision tree model and random forest model. It takes in the training vectors file and the training label file. It will output four predicted classes for both decision tree and random forest model. Also it saves both prediction and ground truth in cm file to generate confusion matrix.
+Input file:
+"../data/out/clf_train.vectors", "../data/out/clf_train.labels"
+Output file:
+'../data/out/dt_predict_class_k.vectors'(k=1,2,3,4), '../data/out/dt_cm'
+'../data/out/rf_predict_class_k.vectors'(k=1,2,3,4), '../data/out/rf_cm'
 
 # neural_network.py:
 Libraries required:
@@ -35,3 +58,19 @@ Input file:
 '../data/out/nn_cm'
 Output file:
 '../data/pic/nn_cm.png'
+
+# Cos_DBScan.py
+Libraries required:
+None
+Description:
+This program is used to do clustering on four datasets, which the input is the four predict class datas which generate during the classfication process.The result is a data file that contains datas that have been clustered to different clusters.
+Input file:
+'../data/out/predict_class_1.vectors'
+'../data/out/predict_class_2.vectors'
+'../data/out/predict_class_3.vectors'
+'../data/out/predict_class_4.vectors'
+Output file:
+'../data/out/cluster_result_1.csv'
+'../data/out/cluster_result_2.csv'
+'../data/out/cluster_result_3.csv'
+'../data/out/cluster_result_4.csv'
