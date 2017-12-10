@@ -112,16 +112,12 @@ class Model:
       output = generate_predict_output(vectors[i], ids[i])+'\n'
       if dt_prediction[i] == 1:
         f1.write(output)
-        f1.write('\n')
       if dt_prediction[i] == 2:
         f2.write(output)
-        f2.write('\n')
       if dt_prediction[i] == 3:
         f3.write(output)
-        f3.write('\n')
       if dt_prediction[i] == 4:
         f4.write(output)
-        f4.write('\n')
     f1.close()
     f2.close()
     f3.close()
@@ -135,16 +131,12 @@ class Model:
       output = generate_predict_output(vectors[i], ids[i])+'\n'
       if rf_prediction[i] == 1:
         f1.write(output)
-        f1.write('\n')
       if rf_prediction[i] == 2:
         f2.write(output)
-        f2.write('\n')
       if rf_prediction[i] == 3:
         f3.write(output)
-        f3.write('\n')
       if rf_prediction[i] == 4:
         f4.write(output)
-        f4.write('\n')
     f1.close()
     f2.close()
     f3.close()
