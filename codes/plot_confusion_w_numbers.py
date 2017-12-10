@@ -93,4 +93,5 @@ np.set_printoptions(precision=2)
 plot_confusion_matrix(cnf_matrix, classes=classes, normalize=True,
                       title='Normalized confusion matrix')
 
-plt.show()
+# plt.show()
+plt.savefig('../data/pic/nn_cm.png', format='png')
