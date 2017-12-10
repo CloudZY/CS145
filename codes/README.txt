@@ -1,5 +1,18 @@
 # CS145
 
+# clusterRanking.py:
+Libraries required:
+* numpy
+* ast
+Description:
+This module is used to rank the clusters (tweet events). It reads in the original tweet data and the clustered output from clustering module. It outputs the ranking results and plain texts for data visualization.
+Input file:
+'../data/out/clf_train.json'
+'../data/out/cluster_result_k.csv' (k=1,2,3,4)
+Output file:
+'../data/out/ranking_result_k' (k=1,2,3,4)
+'../data/out/plain_k' (k=1,2,3,4)
+
 # decisionTree.py:
 Libraries required:
 * sklearn
