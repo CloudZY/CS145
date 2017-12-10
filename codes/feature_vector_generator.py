@@ -5,7 +5,10 @@ import re
 import operator
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from sklearn import svm
+from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix
+from sklearn import cross_validation
+from sklearn.linear_model import LogisticRegression
 import numpy as np
 
 
@@ -17,7 +20,7 @@ fields = ['created_at', 'coordinates', 'text',
 event_types = ['disaster', 'festival', 'traffic', 'sports']
 label_num = {'traffic' : 1, 'sports' : 2, 'festival' : 3, 'disaster' : 4}
 
-disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp', 'l', 'diego', 'san', 'nearby']
+disregard = ['rt', '’', 'the', 'de', 'en', 'we', 'los', 'el', 'ca', 'la', 'angeles', '‘', 'of', 'amp', 'l']
 
 def process_json(json):
     if json == None:
@@ -188,7 +191,7 @@ def evaluate_prediction(predict, test):
     for i in range(len(predict)):
         if predict[i] == test[i]:
             count += 1
-    print("Precision: " + str(float(count) / len(predict)))
+    return float(count) / len(predict)
 
 def write_to_file(data, filename):
     out_file = open(filename, 'w', encoding='utf-8')
@@ -209,139 +212,134 @@ def get_data_files_from_raw_json(in_file, out_token, out_json):
         tokens[i].append(i + 1)
     write_to_file(tokens, out_token)
 
-def printHelp():
-    print('-K k : keep top k (>0) number of features, keep all available features if not enough in training data.')
-    print('-li f : input training data from f')
-    print('-lo f : output dup_removed training data texts to f if needed')
-    print('-ll f : input training labels from f')
-    print('-ti f : input test data from f')
-    print('-to f : output dup_removed test data texts to f if needed')
-    print('-tl f : input test labels from f')
-    print('--default : use default values(in source file)')
+def get_stats(jsons):
+    users = set()
+    followers = 0
+    friends = 0
+    start = None
+    end = None
+    for json in jsons:
+        users.add(json['user_id'])
+        followers += json['user_followers_count']
+        friends += json['user_friends_count']
+        if start is None:
+            start = json['created_at']
+        elif json['created_at'] < start:
+            start = json['created_at']
+        if end is None:
+            end = json['created_at']
+        elif json['created_at'] > end:
+            end = json['created_at']
+    return users, followers, friends, start, end
 
 if __name__ == '__main__':
 
-    '''**********defualt values**********'''
-    '''
-    train_in_file = 'traffic_raw_tweets.json'
-    train_out_file = ''
-    train_label_file = 'traffic_tweets_labels'
-
-    test_in_file = 'processed_tweets_1.json'
-    test_out_file = ''
-    test_label_file = 'test_labels'
-    
-    if len(sys.argv) == 1 or sys.argv[1] == '--help':
-        printHelp()
-        sys.exit()
-    else:
-        idx = 1;
-        while idx < len(sys.argv):
-            if sys.argv[idx] == '-K':
-                try:
-                    K = int(sys.argv[idx + 1])
-                except ValueError:
-                    print('please input a valid number')
-                    sys.exit()
-            elif sys.argv[idx] == '-li':
-                train_in_file = sys.argv[idx + 1]
-            elif sys.argv[idx] == '-lo':
-                train_out_file = sys.argv[idx + 1]
-            elif sys.argv[idx] == '-ll':
-                train_label_file = sys.argv[idx + 1]
-            elif sys.argv[idx] == '-ti':
-                test_in_file = sys.argv[idx + 1]
-            elif sys.argv[idx] == '-to':
-                test_out_file = sys.argv[idx + 1]
-            elif sys.argv[idx] == '-tl':
-                test_label_file = sys.argv[idx + 1]
-            elif sys.argv[idx] != '--default':
-                printHelp()
-                sys.exit()
-            idx += 2
-    '''
+    run_cv = False
+    if len(sys.argv) == 2 and sys.argv[1] == '-cv':
+        run_cv = True
 
     K = 10
     feat_set = set()
-    all_data = []
-    all_json = []
-    all_labels = []
-    feats = dict()
-    clfs = dict()
-    
-    #get_data_files_from_raw_json('./data/disaster.json', './temp/disaster.tokens', './temp/disaster.json')
-    '''
-    idx = []
-    tokens = read_from_file('./temp/disaster.tokens')
-    for token in tokens:
-        idx.append(token[-1])
-    jsons = np.array(read_from_file('./temp/disaster.json'))
-    write_to_file(jsons[idx], './temp/new_disaster.json')
-    '''
+    non_noise_data_tokens = []
+    non_noise_json = []
+    non_noise_data_labels = []
+    train_feature_dict = dict()
+    train_clfs = dict()
 
+    '''**********Model***********'''
     for event_type in event_types:
-        train_in_file = './data/' + event_type + '.json'
-        train_tokens_in_file = './data/' + event_type + '.tokens'
-        train_label_file = './data/' + event_type + '.labels'
-        train_out_file = './out/' + event_type + '.tokens'
+        train_json_in_file = '../data/in/' + event_type + '.json'
+        #train_tokens_in_file = '../data/in/' + event_type + '.tokens'
+        train_label_in_file = '../data/in/' + event_type + '.labels'
+        #train_tokens_out_file = '../data/out/' + event_type + '.tokens'
 
-        train_raw_data = preprocess_data(read_from_file(train_in_file))
-        train_raw_data = remove_dups(train_raw_data)
-        train_data = tokenize_text_from_json_data(train_raw_data)
-        features = get_features_from_train_data(train_data, K)
-        feat_vec, train_vec = get_feature_vectors(train_data, features)
-        train_labels = read_from_file(train_label_file)
+        # data preparation
+        train_json_data = remove_dups(preprocess_data(read_from_file(train_json_in_file)))
+        train_tokens = tokenize_text_from_json_data(train_json_data)
+        train_feature = get_features_from_train_data(train_tokens, K)
+        train_feature_vector, train_vector = get_feature_vectors(train_tokens, train_feature)
+        train_labels = read_from_file(train_label_in_file)
 
+        # mark non event_type labels and event_type labels
         for i in range(len(train_labels)):
             if train_labels[i] != 0:
-                all_labels.append(train_labels[i])
-                all_data.append(train_data[i])
-                all_json.append(train_raw_data[i])
+                non_noise_data_labels.append(train_labels[i])
+                non_noise_data_tokens.append(train_tokens[i])
+                non_noise_json.append(train_json_data[i])
             if train_labels[i] != label_num[event_type]:
                 train_labels[i] = 0
             else:
                 train_labels[i] = 1
 
-        clfs[event_type] = svm.SVC()
-        clfs[event_type].fit(train_vec, train_labels)
-        feats[event_type] = features
+        # SVM for this event_type
+        train_clfs[event_type] = SVC().fit(train_vector, train_labels)
+        train_feature_dict[event_type] = train_feature
 
+        # integrate features
         if feat_set is not None:
-            feat_set.update(set(features))
+            feat_set.update(set(train_feature))
         else:
-            feat_set = set(features)
+            feat_set = set(train_feature)
+
+
+        # cross validation
+        if run_cv:
+            train_vector = np.array(train_vector)
+            train_labels = np.array(train_labels)
+            test_accuracy = 0
+            cmat = np.zeros((2,2), dtype='float')
+            cv = cross_validation.KFold(len(train_vector), n_folds = 10)
+            for traincv, testcv in cv:
+                train_x = train_vector[traincv]
+                train_y = train_labels[traincv]
+                test_x = train_vector[testcv]
+                test_y = train_labels[testcv]
+                test_clf = SVC().fit(train_x, train_y)
+                predicts = test_clf.predict(test_x)
+                test_accuracy += evaluate_prediction(predicts, test_y) / 10
+                cmat += np.array(confusion_matrix(test_y, predicts), dtype='float') / 10          
+            print(event_type + " Accuracy: ", test_accuracy)
+            print(event_type + " Confusion Matrix: ", cmat)
     
-    for i in range(len(all_json)):
-        all_json[i]['index'] = i + 1
+    # add index to non noise json data
+    for i in range(len(non_noise_json)):
+        non_noise_json[i]['index'] = i + 1
 
+    # integrate features and get output data vectors for training classifier
     all_features = get_dict_from_set(feat_set)
-    all_vector = [list(all_features) + ['id']]
-    feat_vec, train_vec = get_feature_vectors(all_data, all_features)
-    all_vector = all_vector + feat_vec
-    write_to_file(all_vector, './out/clf_train.vectors')
-    write_to_file(all_labels, './out/clf_train.labels')
-    write_to_file(all_json, './out/clf_train.json')
+    non_noise_feature_vector = [list(all_features) + ['id']]
+    feature_vector, non_noise_train_vector = get_feature_vectors(non_noise_data_tokens, all_features)
+    non_noise_feature_vector = non_noise_feature_vector + feature_vector
+    write_to_file(non_noise_feature_vector, '../data/out/clf_train.vectors')
+    write_to_file(non_noise_data_labels, '../data/out/clf_train.labels')
+    write_to_file(non_noise_json, '../data/out/clf_train.json')
 
+    # read and prepare test data
+    test_json_in_file = '../data/in/test.json'
+    test_json_data = remove_dups(read_from_file(test_json_in_file))
+    test_tokens = tokenize_text_from_json_data(test_json_data)
+    predicts = [0] * len(test_tokens)
 
-    test_in_file = './data/test.data'
-    test_raw_data = read_from_file(test_in_file)
-    test_raw_data = remove_dups(test_raw_data)
-    test_data = tokenize_text_from_json_data(test_raw_data)
-    predicts = [0] * len(test_data)
-
+    # check if an tweet is an event
     for event_type in event_types:
-        feat_vec, test_vec = get_feature_vectors(test_data, feats[event_type])
-        one_try = clfs[event_type].predict(test_vec)
-        for i in range(len(test_data)):
+        test_feature_vector, test_vector = get_feature_vectors(test_tokens, train_feature_dict[event_type])
+        one_try = train_clfs[event_type].predict(test_vector)
+        for i in range(len(test_tokens)):
             predicts[i] = predicts[i] or one_try[i]
 
-    feat_vec, test_vec = get_feature_vectors(test_data, all_features)
-    feat_vec.insert(0, list(all_features) + ['id'])
-    write_to_file(feat_vec, './out/clf_test.vectors')        
-    write_to_file(predicts, './out/clf_test.labels')
+    # generate test data vector
+    test_feature_vector, test_vector = get_feature_vectors(test_tokens, all_features)
+    test_feature_vector.insert(0, list(all_features) + ['id'])
+    for i in range(len(test_json_data)):
+        test_json_data[i]['index'] = i + 1
+    write_to_file(test_feature_vector, '../data/out/clf_test.vectors')        
+    write_to_file(predicts, '../data/out/clf_test.labels')
+    write_to_file(test_json_data, '../data/out/clf_test.json')
 
-    truth = read_from_file('./data/test.labels')
+    # evaluate test data accuracy
+    truth = read_from_file('../data/in/test.labels')
     for i in range(len(truth)):
         if truth[i] != 0:
             truth[i] = 1
-    evaluate_prediction(predicts, truth)
+    print("Accuracy: ", evaluate_prediction(predicts, truth))
+   

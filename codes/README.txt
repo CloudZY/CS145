@@ -1,5 +1,31 @@
 # CS145
 
+# feature_vector_generator.py
+Libraries required:
+* nltk
+* sklearn
+* numpy
+Description:
+This module reads from file crawled json data file and labels, extracts features and generates feature vectors for each data. It uses SVM to filter out non event noise data and save feature vectors, json and labels for event data for classification modules to use.
+Input files:
+'../data/in/traffic.json'
+'../data/in/traffic.labels'
+'../data/in/sports.json'
+'../data/in/sports.labels'
+'../data/in/festival.json'
+'../data/in/festival.labels'
+'../data/in/disaster.json'
+'../data/in/disaster.labels'
+'../data/in/test.json'
+'../data/in/test.labels'
+Output files:
+'../data/out/clf_train.vectors'
+'../data/out/clf_train.json'
+'../data/out/clf_train.labels'
+'../data/out/clf_test.vectors'
+'../data/out/clf_t est.json'
+'../data/out/clf_test.labels'
+
 # clusterRanking.py:
 Libraries required:
 * numpy
@@ -74,3 +100,8 @@ Output file:
 '../data/out/cluster_result_2.csv'
 '../data/out/cluster_result_3.csv'
 '../data/out/cluster_result_4.csv'
+
+# twitter_crawler.py
+Libraries required:
+
+
