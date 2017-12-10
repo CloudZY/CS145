@@ -60,8 +60,8 @@ class Model:
       rf_nfold_acc = accuracy_score(test_labels, rf_pred)
       rf_accu.append(rf_nfold_acc)
 
-    print 'decision tree average accuracy:{}'.format(np.mean(dt_accu))
-    print 'random forest average accuracy:{}'.format(np.mean(rf_accu))
+    print 'decision tree 10-fold average accuracy:{}'.format(np.mean(dt_accu))
+    print 'random forest 10-fold average accuracy:{}'.format(np.mean(rf_accu))
 
     dt_max_acc = np.argmax(dt_accu)
     rf_max_acc = np.argmax(rf_accu)
@@ -95,10 +95,10 @@ class Model:
     f.write(str(rf_accu))
     f.close()
 
-    f1 = open('./out/dt_pred_class_1.vectors', 'w+')
-    f2 = open('./out/dt_pred_class_2.vectors', 'w+')
-    f3 = open('./out/dt_pred_class_3.vectors', 'w+')
-    f4 = open('./out/dt_pred_class_4.vectors', 'w+')
+    f1 = open('../data/out/dt_predict_class_1.vectors', 'w+')
+    f2 = open('../data/out/dt_predict_class_2.vectors', 'w+')
+    f3 = open('../data/out/dt_predict_class_3.vectors', 'w+')
+    f4 = open('../data/out/dt_predict_class_4.vectors', 'w+')
     for i in range(len(vectors)):
       output = str(vectors[i]+[ids[i]])
       if dt_prediction[i] == 1:
@@ -118,12 +118,12 @@ class Model:
     f3.close()
     f4.close()
 
-    f1 = open('./out/rf_pred_class_1.vectors', 'w+')
-    f2 = open('./out/rf_pred_class_2.vectors', 'w+')
-    f3 = open('./out/rf_pred_class_3.vectors', 'w+')
-    f4 = open('./out/rf_pred_class_4.vectors', 'w+')
+    f1 = open('../data/out/rf_predict_class_1.vectors', 'w+')
+    f2 = open('../data/out/rf_predict_class_2.vectors', 'w+')
+    f3 = open('../data/out/rf_predict_class_3.vectors', 'w+')
+    f4 = open('../data/out/rf_predict_class_4.vectors', 'w+')
     for i in range(len(vectors)):
-      output = str(vectors[i]+[ids[i]])
+      output = generate_predict_output(vectors[i], ids[i])+'\n'
       if rf_prediction[i] == 1:
         f1.write(output)
         f1.write('\n')
@@ -141,11 +141,19 @@ class Model:
     f3.close()
     f4.close()
 
-    
-if __name__ == '__main__':
-  train_vector_path = 'out/clf_train.vectors'
-  train_label_path = 'out/clf_train.labels'
+def generate_predict_output(vector, id):
+  tmp = vector
+  tmp.append(id)
+  data = str(tmp)[1:-1].replace(', ', '\t')
+  return data
 
+def runModel(train_vector_path, train_label_path):
   M = Model()
   M.trainModel(train_vector_path, train_label_path)
   M.testModel(train_vector_path, train_label_path)
+    
+if __name__ == '__main__':
+  train_vector_path = '../data/out/clf_train.vectors'
+  train_label_path = '../data/out/clf_train.labels'
+
+  runModel(train_vector_path, train_label_path)
