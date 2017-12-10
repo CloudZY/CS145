@@ -25,10 +25,12 @@ class DataPoints:
 # =======================================================================
 class DBSCAN:
     # -------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self,input_file,output_file):
         self.e = 0.0
         self.minPts = 2
         self.noOfLabels = 0
+        self.input_file = input_file
+        self.output_file = output_file
     # -------------------------------------------------------------------
     def readDataSet(self,filePath):
         dataSet = []
@@ -45,11 +47,10 @@ class DBSCAN:
     # -------------------------------------------------------------------
     def main(self, args):
         seed = 71
-
-        dataSet = self.readDataSet("predict_class_1.vectors")
+		
+        dataSet = self.readDataSet(self.input_file)
         #random.Random(seed).shuffle(dataSet)
         self.e = 0
-        print("Esp :" + str(self.e))
         self.dbscan(dataSet)
         
     # -------------------------------------------------------------------
@@ -116,7 +117,7 @@ class DBSCAN:
         print("Number of clusters formed :" + str(len(clusters)))
         print("Noise points :" + str(len(noise)))
 
-        DataPoints.writeToFile(noise, clusters, "cos_DBSCAN.csv")
+        DataPoints.writeToFile(noise, clusters, self.output_file)
     # -------------------------------------------------------------------
     def removeDuplicates(self, n, n1):
         for point in n1:
@@ -135,8 +136,19 @@ class DBSCAN:
             xx_sum += float(k1[i])*float(k1[i])
             yy_sum += float(k2[i])*float(k2[i])
             xy_sum += float(k1[i])*float(k2[i])
+        if math.sqrt(xx_sum*yy_sum) == 0:
+            return -1
         return xy_sum/math.sqrt(xx_sum*yy_sum)
 # =======================================================================
 if __name__ == "__main__":
-    d = DBSCAN()
-    d.main(None)
+    d1 = DBSCAN("../data/out/predict_class_1.vectors","../data/out/cluster_result_1.csv")
+    d1.main(None)
+    print("------------------------------------")
+    d2 = DBSCAN("../data/out/predict_class_2.vectors","../data/out/cluster_result_2.csv")
+    d2.main(None)
+    print("------------------------------------")
+    d3 = DBSCAN("../data/out/predict_class_3.vectors","../data/out/cluster_result_3.csv")
+    d3.main(None)
+    print("------------------------------------")
+    d4 = DBSCAN("../data/out/predict_class_4.vectors","../data/out/cluster_result_4.csv")
+    d4.main(None)
