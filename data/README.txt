@@ -1,4 +1,8 @@
 # CS145
 
-# decisionTree.py:
-This module is used to construct, train and test decision tree model and random forest model. It takes in the training vectors file "../data/out/clf_train.vectors" and the training label file "../data/out/clf_train.labels". It will output four predicted classes for both decision tree and random forest model. 
+# dt[rf]_cm:
+These are the files generated along with the classification of decision tree(dt) and random forest(rf). They are used to draw the confusion matrix diagram.
+
+# dt[rf]_predict_class_[1,2,3,4].vectors:
+These files are the classification results of decision tree(dt) and random forest(rf). The number 1,2,3,4 are correponding to different classes, where 1 stands for traffic, 2 stands for sports, 3 stands for disaster, 4 stands for festival.
+
