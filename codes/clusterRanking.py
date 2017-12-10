@@ -1,3 +1,11 @@
+# just run 'python clusterRanking.py'
+# input:
+# '../data/out/clf_train.json'        original tweet data
+# '../data/out/cluster_result_#.csv'  result from clustering
+# output:
+# '../data/out/ranking_result_#'      result for ranking
+# '../data/out/plain_#'               plain texts for 4 classes (used for wordcloud)
+
 import os
 import ast
 import json
@@ -40,6 +48,7 @@ def readJson(json_path):
 def visitClusterInfo(cluster_info, json_data):
   ranking_result = []
   text_result = []
+  plain = []
   for label in cluster_info.keys():
     clus = cluster(label)
     max_ranking = 0
@@ -48,6 +57,7 @@ def visitClusterInfo(cluster_info, json_data):
       #print(idx)
       for data in json_data:
         if(idx==data['index']):
+          plain.append(data['text'])
           re = data['retweet_count']
           fa = data['favorite_count']
           fo = data['user_followers_count']
@@ -64,29 +74,29 @@ def visitClusterInfo(cluster_info, json_data):
           break
     ranking_result.append(clus.ranking/len(cluster_info[label]))
     text_result.append(max_text)
-  return (ranking_result,text_result)
+  return (ranking_result,text_result,plain)
 
 
 # main test
 # read data
-json_data = readJson('out/clf_train.json')
-info1 = readData('out/cluster_result_1.csv')
-info2 = readData('out/cluster_result_2.csv')
-info3 = readData('out/cluster_result_3.csv')
-info4 = readData('out/cluster_result_4.csv')
+json_data = readJson('../data/out/clf_train.json')
+info1 = readData('../data/out/cluster_result_1.csv')
+info2 = readData('../data/out/cluster_result_2.csv')
+info3 = readData('../data/out/cluster_result_3.csv')
+info4 = readData('../data/out/cluster_result_4.csv')
 
 # ranking
-(ranks1,texts1) = visitClusterInfo(info1, json_data)
-(ranks2,texts2) = visitClusterInfo(info2, json_data)
-(ranks3,texts3) = visitClusterInfo(info3, json_data)
-(ranks4,texts4) = visitClusterInfo(info4, json_data)
+(ranks1,texts1,plain1) = visitClusterInfo(info1, json_data)
+(ranks2,texts2,plain2) = visitClusterInfo(info2, json_data)
+(ranks3,texts3,plain3) = visitClusterInfo(info3, json_data)
+(ranks4,texts4,plain4) = visitClusterInfo(info4, json_data)
 
 # output
 print('**********Ranking results**********')
 print('Format: (ranking metric value, original text)\n')
 
 print('-----Top 3 results for traffic-----')
-f = open('out/ranking_result_1','w')
+f = open('../data/out/ranking_result_1','w')
 for i in range(len(ranks1)):
   f.write(str((int(ranks1[i]), texts1[i])))
   f.write('\n')
@@ -94,8 +104,13 @@ sorted_index = numpy.argsort(ranks1)
 for i in range(len(ranks1)-1,len(ranks1)-4,-1):
   print(int(ranks1[sorted_index[i]]), texts1[sorted_index[i]])
 print('')
+f = open('../data/out/plain_1','w')
+for t in plain1:
+  f.write(t)
+  f.write('\n')
+
 print('-----Top 3 results for sports-----')
-f = open('out/ranking_result_2','w')
+f = open('../data/out/ranking_result_2','w')
 for i in range(len(ranks2)):
   f.write(str((int(ranks2[i]), texts2[i])))
   f.write('\n')
@@ -103,8 +118,13 @@ sorted_index = numpy.argsort(ranks2)
 for i in range(len(ranks2)-1,len(ranks2)-4,-1):
   print(int(ranks2[sorted_index[i]]), texts2[sorted_index[i]])
 print('')
+f = open('../data/out/plain_2','w')
+for t in plain2:
+  f.write(t)
+  f.write('\n')
+
 print('-----Top 3 results for festival-----')
-f = open('out/ranking_result_3','w')
+f = open('../data/out/ranking_result_3','w')
 for i in range(len(ranks3)):
   f.write(str((int(ranks3[i]), texts3[i])))
   f.write('\n')
@@ -112,8 +132,13 @@ sorted_index = numpy.argsort(ranks3)
 for i in range(len(ranks3)-1,len(ranks3)-4,-1):
   print(int(ranks3[sorted_index[i]]), texts3[sorted_index[i]])
 print('')
+f = open('../data/out/plain_3','w')
+for t in plain3:
+  f.write(t)
+  f.write('\n')
+
 print('-----Top 3 results for disaster-----')
-f = open('out/ranking_result_4','w')
+f = open('../data/out/ranking_result_4','w')
 for i in range(len(ranks4)):
   f.write(str((int(ranks4[i]), texts4[i])))
   f.write('\n')
@@ -121,3 +146,8 @@ sorted_index = numpy.argsort(ranks4)
 for i in range(len(ranks4)-1,len(ranks4)-4,-1):
   print(int(ranks4[sorted_index[i]]), texts4[sorted_index[i]])
 print('')
+f = open('../data/out/plain_4','w')
+for t in plain4:
+  f.write(t)
+  f.write('\n')
+
