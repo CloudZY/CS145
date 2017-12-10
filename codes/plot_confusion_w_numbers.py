@@ -56,8 +56,8 @@ def plot_confusion_matrix(cm, classes,
 #             ground_truth.append(g)
 
 #
-input_file = open('./out/randomForest_gt_pred.txt')
-# input_file = open('./out/nn_cm')
+# input_file = open('../data/out/randomForest_gt_pred.txt')
+input_file = open('../data/out/nn_cm')
 ground_truth = input_file.readline()
 predict = input_file.readline()
 results = input_file.readline()
