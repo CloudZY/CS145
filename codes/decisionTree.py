@@ -69,15 +69,24 @@ class Model:
     self.dt_model = dt_models[dt_max_acc]
     self.rf_model = rf_models[rf_max_acc]
 
-  def testModel(self, v_path, l_path):
+  def testModel(self, v_path, l_path, tv_path, tl_path):
+    t_vectors, t_ids, t_labels = self.readData(tv_path, tl_path)
+    t_dt_prediction = self.dt_model.predict(t_vectors)
+    t_rf_prediction = self.rf_model.predict(t_vectors)
+    t_dt_accu = accuracy_score(t_labels, t_dt_prediction)
+    t_rf_accu = accuracy_score(t_labels, t_rf_prediction)
+
     vectors, ids, labels = self.readData(v_path, l_path)
     dt_prediction = self.dt_model.predict(vectors)
     rf_prediction = self.rf_model.predict(vectors)
-
     dt_accu = accuracy_score(labels, dt_prediction)
     rf_accu = accuracy_score(labels, rf_prediction)
-    print 'decision tree test accuracy:{}'.format(dt_accu)
-    print 'random forest test accuracy:{}'.format(rf_accu)
+
+    # uncomment the following two lines if you want accuracy on test dataset
+    # print 'decision tree test accuracy:{}'.format(t_dt_accu)
+    # print 'random forest test accuracy:{}'.format(t_rf_accu)
+    print 'decision tree whole dataset accuracy:{}'.format(dt_accu)
+    print 'random forest whole dataset accuracy:{}'.format(rf_accu)
 
     f = open('../data/out/dt_cm', 'w+')
     f.write(str(labels))
@@ -147,13 +156,15 @@ def generate_predict_output(vector, id):
   data = str(tmp)[1:-1].replace(', ', '\t')
   return data
 
-def runModel(train_vector_path, train_label_path):
+def runModel(train_vector_path, train_label_path, test_vector_path, test_label_path):
   M = Model()
   M.trainModel(train_vector_path, train_label_path)
-  M.testModel(train_vector_path, train_label_path)
+  M.testModel(train_vector_path, train_label_path, test_vector_path, test_label_path)
     
 if __name__ == '__main__':
   train_vector_path = '../data/out/clf_train.vectors'
   train_label_path = '../data/out/clf_train.labels'
+  test_vector_path = '../data/out/clf_test.vectors'
+  test_label_path = '../data/out/clf_test.labels'
 
-  runModel(train_vector_path, train_label_path)
+  runModel(train_vector_path, train_label_path, test_vector_path, test_label_path)
