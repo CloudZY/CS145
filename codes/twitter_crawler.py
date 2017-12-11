@@ -46,29 +46,17 @@ if __name__ == '__main__':
         auth = tweepy.OAuthHandler(Consumer_Key,Consumer_Secret)
         auth.set_access_token(Access_Token_Key, Access_Token_Secret)    
         api = tweepy.API(auth)
-        keyword = '“los angeles” OR la disaster OR earthquake OR "forest fire" OR flood OR hurricane OR tsunami'
+        keyword = '"los angeles" OR la disaster OR earthquake OR "forest fire" OR flood OR hurricane OR tsunami'
         #keyword = 'los angeles Dodgers OR Lakers OR Clippers OR Ram'
         #keyword = "los angeles traffic OR car accident"
         #keyword = "los angeles traffic OR festival"
-        out_file_name = 'processed_tweets.json'
-        out_raw_file_name = 'raw_tweets.json'
+        out_raw_file_name = '../data/out/raw_tweets.json'
         results = api.search(q=keyword, count=100, languages=['en'])
-        out_file = open(out_file_name, 'a', encoding='utf-8')
-        out_file_raw = open(out_raw_file_name, 'a', encoding='utf-8')
+        out_file_raw = open(out_raw_file_name, 'a')
         for r in results:
             out_file_raw.write(str(r._json))
             out_file_raw.write('\n')
-            tweet = process_json(r._json)
-            if tweet != None:
-                out_file.write(str(tweet))
-                out_file.write('\n')
-
-            tweet = process_json(r._json.get('retweeted_status'))
-            if tweet != None:
-                out_file.write(str(tweet))
-                out_file.write('\n')
         out_file_raw.close()
-        out_file.close()
     
 #twitterStream = Stream(auth, TwitterListener(time_limit=20)) 
 #twitterStream.filter(track=keyword, languages=['en'])

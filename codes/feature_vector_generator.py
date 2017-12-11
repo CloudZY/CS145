@@ -184,11 +184,13 @@ def get_feature_vectors(filtered_text, features):
 
 def get_dict_from_set(fset):
     counter = 0
+    l = []
     d = dict()
     for e in fset:
         d[e] = counter
         counter += 1
-    return d
+        l.append(e)
+    return d, l
 
 def evaluate_prediction(predict, test):
     count = 0
@@ -264,6 +266,7 @@ if __name__ == '__main__':
         train_feature_vector, train_vector = get_feature_vectors(train_tokens, train_feature)
         train_labels = read_from_file(train_label_in_file)
 
+
         # mark non event_type labels and event_type labels
         for i in range(len(train_labels)):
             if train_labels[i] != 0:
@@ -310,8 +313,8 @@ if __name__ == '__main__':
         non_noise_json[i]['index'] = i + 1
 
     # integrate features and get output data vectors for training classifier
-    all_features = get_dict_from_set(feat_set)
-    non_noise_feature_vector = [list(all_features) + ['id']]
+    all_features, all_features_list = get_dict_from_set(feat_set)
+    non_noise_feature_vector = [all_features_list + ['id']]
     feature_vector, non_noise_train_vector = get_feature_vectors(non_noise_data_tokens, all_features)
     non_noise_feature_vector = non_noise_feature_vector + feature_vector
     write_to_file(non_noise_feature_vector, '../data/out/clf_train.vectors')
@@ -337,7 +340,7 @@ if __name__ == '__main__':
     for i in range(len(truth)):
         if truth[i] != 0:
             truth[i] = 1
-    print("Accuracy: ", evaluate_prediction(predicts, truth))
+    #print("Accuracy: ", evaluate_prediction(predicts, truth))
 
     filtered_test_tokens = []
     filtered_test_labels = []

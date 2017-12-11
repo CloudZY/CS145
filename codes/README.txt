@@ -2,7 +2,6 @@
 
 # feature_vector_generator.py
 Libraries required:
-* ast
 * nltk
 * sklearn
 * numpy
@@ -30,7 +29,6 @@ Output files:
 # clusterRanking.py:
 Libraries required:
 * numpy
-* ast
 Description:
 This module is used to rank the clusters (tweet events). It reads in the original tweet data and the clustered output from clustering module. It outputs the ranking results and plain texts for data visualization.
 Input file:
@@ -44,7 +42,6 @@ Output file:
 Libraries required:
 * sklearn
 * numpy
-* ast
 Description:
 This module is used to construct, train and test decision tree model and random forest model. It takes in the training vectors file and the training label file. It will output four predicted classes for both decision tree and random forest model. Also it saves both prediction and ground truth in cm file to generate confusion matrix.
 Input file:
@@ -61,7 +58,6 @@ A three-layer neural network class (model). It requires 3 parameters as input, t
 
 # run_nn.py:
 Libraries required:
-* ast
 * PyTorch (torch)
 * numpy
 * sklearn
@@ -77,8 +73,6 @@ Libraries required:
 * numpy
 * sklearn
 * matplotlib
-* itertools
-* ast
 Description:
 This module is for generating a visualization graph of a confusion matrix. It reads a list of ground truth and predictions as input and uses modules from sklearn and matplotlib to generate the graph with number and color standing for its rate. 
 Input file:
@@ -104,5 +98,10 @@ Output file:
 
 # twitter_crawler.py
 Libraries required:
+tweepy
+Description:
+Run twitter api to crawl data with specific search query. It will crawl 100 data each run.
+Output file:
+'../data/out/raw_tweets.json'
 
 
