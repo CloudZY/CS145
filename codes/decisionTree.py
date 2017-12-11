@@ -104,10 +104,10 @@ class Model:
     f.write(str(rf_accu))
     f.close()
 
-    f1 = open('../data/out/dt_predict_class_1.vectors', 'w+')
-    f2 = open('../data/out/dt_predict_class_2.vectors', 'w+')
-    f3 = open('../data/out/dt_predict_class_3.vectors', 'w+')
-    f4 = open('../data/out/dt_predict_class_4.vectors', 'w+')
+    f1 = open('../data/out/dt_predict_class_1.vectors', 'w')
+    f2 = open('../data/out/dt_predict_class_2.vectors', 'w')
+    f3 = open('../data/out/dt_predict_class_3.vectors', 'w')
+    f4 = open('../data/out/dt_predict_class_4.vectors', 'w')
     for i in range(len(vectors)):
       output = generate_predict_output(vectors[i], ids[i])+'\n'
       if dt_prediction[i] == 1:
@@ -123,10 +123,10 @@ class Model:
     f3.close()
     f4.close()
 
-    f1 = open('../data/out/rf_predict_class_1.vectors', 'w+')
-    f2 = open('../data/out/rf_predict_class_2.vectors', 'w+')
-    f3 = open('../data/out/rf_predict_class_3.vectors', 'w+')
-    f4 = open('../data/out/rf_predict_class_4.vectors', 'w+')
+    f1 = open('../data/out/rf_predict_class_1.vectors', 'w')
+    f2 = open('../data/out/rf_predict_class_2.vectors', 'w')
+    f3 = open('../data/out/rf_predict_class_3.vectors', 'w')
+    f4 = open('../data/out/rf_predict_class_4.vectors', 'w')
     for i in range(len(vectors)):
       output = generate_predict_output(vectors[i], ids[i])+'\n'
       if rf_prediction[i] == 1:
@@ -143,7 +143,7 @@ class Model:
     f4.close()
 
 def generate_predict_output(vector, id):
-  tmp = vector
+  tmp = [i for i in vector]
   tmp.append(id)
   data = str(tmp)[1:-1].replace(', ', '\t')
   return data
