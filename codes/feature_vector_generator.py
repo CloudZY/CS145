@@ -1,7 +1,10 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import ast
 import sys
 import string
 import re
+import io
 import operator
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -116,17 +119,18 @@ def tokenize_text_from_json_data(data):
         tweets_text.append(tweet['text'])
 
     stop_words = set(stopwords.words('english'))
-    translator = str.maketrans(dict.fromkeys(string.punctuation))
-    emoji_pattern = re.compile("["
-        u"\U0001F600-\U0001F64F"  # emoticons
-        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-        u"\U0001F680-\U0001F6FF"  # transport & map symbols
-        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-                           "]+", flags=re.UNICODE)
+    emoji_pattern = re.compile(
+        u"(\ud83d[\ude00-\ude4f])|"  # emoticons
+        u"(\ud83c[\udf00-\uffff])|"  # symbols & pictographs (1 of 2)
+        u"(\ud83d[\u0000-\uddff])|"  # symbols & pictographs (2 of 2)
+        u"(\ud83d[\ude80-\udeff])|"  # transport & map symbols
+        u"(\ud83c[\udde0-\uddff])"  # flags (iOS)
+        "+", flags=re.UNICODE)
 
     filtered_text = []
     for text in tweets_text:
-        text = text.translate(translator)
+        for p in string.punctuation:
+            text = text.replace(p, '')
         text = emoji_pattern.sub(r'', text)
         text = re.sub('[…\“\”\—\’]', '', text)
         text = re.sub(r'http\S*', '', text)
@@ -194,7 +198,7 @@ def evaluate_prediction(predict, test):
     return float(count) / len(predict)
 
 def write_to_file(data, filename):
-    out_file = open(filename, 'w', encoding='utf-8')
+    out_file = open(filename, 'w')
     for d in data:
         out_file.write(str(d))
         out_file.write('\n')
@@ -316,7 +320,7 @@ if __name__ == '__main__':
 
     # read and prepare test data
     test_json_in_file = '../data/in/test.json'
-    test_json_data = remove_dups(read_from_file(test_json_in_file))
+    test_json_data = read_from_file(test_json_in_file)
     test_tokens = tokenize_text_from_json_data(test_json_data)
     predicts = [0] * len(test_tokens)
 
@@ -327,19 +331,30 @@ if __name__ == '__main__':
         for i in range(len(test_tokens)):
             predicts[i] = predicts[i] or one_try[i]
 
-    # generate test data vector
-    test_feature_vector, test_vector = get_feature_vectors(test_tokens, all_features)
-    test_feature_vector.insert(0, list(all_features) + ['id'])
-    for i in range(len(test_json_data)):
-        test_json_data[i]['index'] = i + 1
-    write_to_file(test_feature_vector, '../data/out/clf_test.vectors')        
-    write_to_file(predicts, '../data/out/clf_test.labels')
-    write_to_file(test_json_data, '../data/out/clf_test.json')
-
     # evaluate test data accuracy
-    truth = read_from_file('../data/in/test.labels')
+    test_labels = read_from_file('../data/in/test.labels')
+    truth = list(test_labels)
     for i in range(len(truth)):
         if truth[i] != 0:
             truth[i] = 1
     print("Accuracy: ", evaluate_prediction(predicts, truth))
+
+    filtered_test_tokens = []
+    filtered_test_labels = []
+    filtered_test_json = []
+    for i in range(len(test_tokens)):
+        if predicts[i] == 1:
+            filtered_test_tokens.append(test_tokens[i])
+            filtered_test_labels.append(test_labels[i])
+            filtered_test_json.append(test_json_data[i])
+
+    # generate test data vector
+    test_feature_vector, test_vector = get_feature_vectors(filtered_test_tokens, all_features)
+    test_feature_vector.insert(0, list(all_features) + ['id'])
+    for i in range(len(filtered_test_json)):
+        filtered_test_json[i]['index'] = i + 1
+    write_to_file(test_feature_vector, '../data/out/clf_test.vectors')        
+    write_to_file(filtered_test_json, '../data/out/clf_test.json')
+    write_to_file(filtered_test_labels, '../data/out/clf_test.labels')
+    
    
