@@ -2,6 +2,7 @@
 
 # feature_vector_generator.py
 Libraries required:
+* ast
 * nltk
 * sklearn
 * numpy
